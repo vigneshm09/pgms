@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
+import os
 from app.config import ensure_upload_directories, settings
 from app.routers import admin, auth, dashboard, messages, notices, payments
 from app.services.bootstrap import bootstrap_application
@@ -11,7 +11,7 @@ ensure_upload_directories()
 app = FastAPI(title="PG Management System API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://127.0.0.1:5173"],
+    allow_origins=[settings.frontend_url, "https://pgms-rho.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
