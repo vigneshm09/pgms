@@ -1,0 +1,25 @@
+# Frontend
+client/node_modules/
+client/dist/
+
+# Env files
+.env
+client/.env
+server/.env
+
+# Python
+server/.venv/
+server/__pycache__/
+*.pyc
+
+# Uploads (keep placeholder)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Build files
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
