@@ -14,7 +14,7 @@ ensure_upload_directories()
 app = FastAPI(title="PG Management System API", version="2.0.0")
 
 
-# ✅ CORS CONFIG
+# ✅ CORS CONFIG (FIXED)
 origins = ["https://pgms-rho.vercel.app"]
 
 if settings.frontend_url and settings.frontend_url not in origins:
@@ -22,7 +22,7 @@ if settings.frontend_url and settings.frontend_url not in origins:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins,   # ✅ NOT "*"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +43,12 @@ def on_startup():
 @app.get("/")
 def root():
     return {"message": "PG Management System API is running."}
+
+
+# ✅ OPTIONAL (remove 405 log)
+@app.head("/")
+def root_head():
+    return {}
 
 
 # ✅ Routers
