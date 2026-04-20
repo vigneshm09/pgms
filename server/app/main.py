@@ -11,49 +11,48 @@ from app.services.bootstrap import bootstrap_application
 # Ensure upload folders exist
 ensure_upload_directories()
 
-# Create app
+# Create FastAPI app
 app = FastAPI(title="PG Management System API", version="2.0.0")
 
 
-# ✅ CORS FIX (IMPORTANT)
-# Always include your frontend URL explicitly
+# ✅ CORS CONFIG (FIXED)
 origins = [
-    "https://pgms-rho.vercel.app",  # your Vercel frontend
+    "https://pgms-rho.vercel.app",  # your frontend
 ]
 
-# If you still want to use env variable, add safely:
-if settings.frontend_url:
+# Add env frontend if available
+if settings.frontend_url and settings.frontend_url not in origins:
     origins.append(settings.frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(set(origins)),  # remove duplicates safely
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Static files (uploads)
+# ✅ Static files (uploads)
 app.mount("/uploads", StaticFiles(directory=settings.uploads_dir), name="uploads")
 
 
-# Startup event
+# ✅ Startup event
 @app.on_event("startup")
 def on_startup():
     bootstrap_application()
 
 
-# Root route
+# ✅ Root check
 @app.get("/")
 def root():
     return {"message": "PG Management System API is running."}
 
 
-# Routers
-app.include_router(auth.router, prefix="/auth")
-app.include_router(dashboard.router)
-app.include_router(admin.router)
-app.include_router(payments.router)
-app.include_router(notices.router)
-app.include_router(messages.router)
+# ✅ Routers (IMPORTANT)
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(admin.router, tags=["Admin"])
+app.include_router(payments.router, tags=["Payments"])
+app.include_router(notices.router, tags=["Notices"])
+app.include_router(messages.router, tags=["Messages"])
