@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
 
 from app.dependencies import ensure_database, get_authenticated_user
 from app.schemas.auth import LoginRequest, TokenResponse
@@ -7,34 +8,40 @@ from app.services.pg import build_room_lookup
 from app.services.serializers import serialize_auth_user
 
 
-# ❌ REMOVE prefix="/auth"
-# ✅ Keep router clean
+# ✅ NO prefix here (important)
 router = APIRouter(tags=["auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest):
     database = ensure_database()
+
     user = database.users.find_one({"email": payload.email})
 
-    if not user or not verify_password(payload.password, user["password_hash"]):
+    # ✅ Validate user
+    if not user or not verify_password(payload.password, user.get("password_hash")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
         )
 
-    tenant = None
-    if user["role"] == "TENANT":
+    tenant: Optional[dict] = None
+
+    # ✅ If tenant → attach room info
+    if user.get("role") == "TENANT":
         tenant = database.tenants.find_one({"user_id": user["_id"]})
+
         if tenant and tenant.get("room_id"):
             room_lookup = build_room_lookup(database)
             room = room_lookup.get(str(tenant.get("room_id")))
+
             if room:
                 user["room_number"] = room.get("room_number")
 
+    # ✅ Create JWT token
     access_token = create_access_token({
         "sub": str(user["_id"]),
-        "role": user["role"]
+        "role": user.get("role"),
     })
 
     return {
@@ -47,9 +54,10 @@ def login(payload: LoginRequest):
 @router.get("/me")
 def get_me(current_user=Depends(get_authenticated_user)):
     database = ensure_database()
-    tenant = None
 
-    if current_user["role"] == "TENANT":
+    tenant: Optional[dict] = None
+
+    if current_user.get("role") == "TENANT":
         tenant = database.tenants.find_one({"user_id": current_user["_id"]})
 
     return serialize_auth_user(current_user, tenant)
