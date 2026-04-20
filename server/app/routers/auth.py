@@ -7,7 +7,9 @@ from app.services.pg import build_room_lookup
 from app.services.serializers import serialize_auth_user
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+# ❌ REMOVE prefix="/auth"
+# ✅ Keep router clean
+router = APIRouter(tags=["auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -30,7 +32,11 @@ def login(payload: LoginRequest):
             if room:
                 user["room_number"] = room.get("room_number")
 
-    access_token = create_access_token({"sub": str(user["_id"]), "role": user["role"]})
+    access_token = create_access_token({
+        "sub": str(user["_id"]),
+        "role": user["role"]
+    })
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -42,7 +48,8 @@ def login(payload: LoginRequest):
 def get_me(current_user=Depends(get_authenticated_user)):
     database = ensure_database()
     tenant = None
+
     if current_user["role"] == "TENANT":
         tenant = database.tenants.find_one({"user_id": current_user["_id"]})
-    return serialize_auth_user(current_user, tenant)
 
+    return serialize_auth_user(current_user, tenant)
